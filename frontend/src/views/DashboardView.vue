@@ -234,6 +234,7 @@ export default {
             const filterValue = filterByStatus && this.$refs.filterByStatusCheckedRadio.checked ? true : false
 
             this.loadings.filterTasks = filterByStatus && true
+            this.loadings.getAndFillTasks = true
             e.preventDefault()
             
             try {
@@ -246,6 +247,7 @@ export default {
                 this.$log.error(error)
             }
             this.loadings.filterTasks = false
+            this.loadings.getAndFillTasks = false
         }
     }
 }
