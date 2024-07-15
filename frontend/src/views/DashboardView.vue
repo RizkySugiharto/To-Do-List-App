@@ -8,7 +8,9 @@
             <br>
             here are your tasks:
         </h4>
-        <div class="mb-4 d-flex flex-wrap">
+
+        <!-- Main Buttons -->
+        <div class="d-flex flex-wrap">
             <button class="btn-create d-flex align-items-center me-3 mb-2" data-bs-toggle="modal" data-bs-target="#modalCreate">
                 <img src="@/assets/icon-create.png" width="20">
                 <p class="m-0 ms-3">Create</p>
@@ -30,7 +32,15 @@
                 <p class="m-0 ms-3">Filter</p>
             </button>
         </div>
-        <div class="d-flex flex-column mb-3">
+        <div class="text-loading" v-if="loadings.updateAllWithUserId">
+            Updating all your tasks....
+        </div>
+        <div class="text-loading" v-if="loadings.deleteAllWithUserId">
+            Deleting all your tasks....
+        </div>
+
+        <!-- Tasks -->
+        <div class="d-flex flex-column mb-3 mt-4">
             <div v-if="loadings.getAndFillTasks" class="mt-2">
                 <h5>Loading your tasks....</h5>
             </div>
@@ -38,7 +48,15 @@
                 <details v-for="task, i in tasks" :key="task">
                     <summary class="text-decoration-line-through" v-if="task.isChecked">{{ task.name }}</summary>
                     <summary v-else>{{ task.name }}</summary>
-                    <div class="d-flex flex-row justify-content-end">
+                    <div class="d-flex flex-row justify-content-end align-items-center">
+                        <div class="me-2">
+                            <div class="text-loading" v-if="loadings.deleteOneById[task._id]">
+                                Deleting....
+                            </div>
+                            <div class="text-loading" v-else-if="loadings.updateOneById[task._id]">
+                                Updating....
+                            </div>
+                        </div>
                         <button class="btn-unchecked ms-2" v-if="task.isChecked" @click="updateOneById(i, task._id, false)">
                             <img src="@/assets/icon-uncheck.png" alt="Check" width="20">
                         </button>
@@ -51,10 +69,16 @@
                     </div>
                 </details>
             </div>
-            <div class="mt-2" v-else>
+            <div v-else-if="filtering" class="mt-2">
+                <h5>Hmm, the results of your filter are empty</h5>
+
+            </div>
+            <div v-else class="mt-2">
                 <h5>Hmm, you haven't created any tasks yet.</h5>
             </div>
         </div>
+
+        <!-- Modal Create -->
         <div class="modal fade" id="modalCreate" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
             <div class="modal-dialog">
                 <div class="modal-content">
@@ -82,6 +106,8 @@
                 </div>
             </div>
         </div>
+
+        <!-- Modal Filter -->
         <div class="modal fade" id="modalFilter" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
             <div class="modal-dialog">
                 <div class="modal-content">
@@ -133,6 +159,7 @@ export default {
             tasks: [],
             api: null,
             lastCreatedTasks: [],
+            filtering: false,
             filteringTimes: 0
         }
     },
@@ -144,6 +171,8 @@ export default {
             this.$router.replace('/')
         }
         this.api = getApi()
+        this.loadings.updateOneById = {}
+        this.loadings.deleteOneById = {}
 
         await this.getAndFillTasks()
     },
@@ -169,6 +198,7 @@ export default {
             this.lastCreatedTasks = []
         },
         clearFilters() {
+            this.filtering = false
             this.filteringTimes = 0
             this.$refs.filterByStatusCheckedRadio.checked = false
             this.$refs.filterByStatusUncheckedRadio.checked = false
@@ -196,25 +226,38 @@ export default {
             this.lastCreatedTasks.push(task)
         },
         async updateOneById(index, taskId, status) {
+            this.loadings.updateOneById[taskId] = true
+            
             await this.api.patch(`/tasks/${taskId}`, { isChecked: status })
                 .then(() => this.updateOne(index, status))
                 .catch((error) => this.$log.error(error))
+
+            this.loadings.updateOneById[taskId] = false
         },
         updateOne(index, status) {
             this.tasks[index].isChecked = status
         },
         async deleteOneById(index, taskId) {
+            this.loadings.deleteOneById[taskId] = true
+            
             await this.api.delete(`/tasks/${taskId}`)
                 .then(() => this.deleteOne(index))
                 .catch((error) => this.$log.error(error))
+
+            this.loadings.deleteOneById[taskId] = false
         },
         deleteOne(index) {
             this.tasks.splice(index, 1)
+            this.filtering = this.tasks.length < 1
         },
         async updateAllWithUserId(status) {
+            this.loadings.updateAllWithUserId = true
+
             await this.api.patch(`/tasks/all/${this.userStore.userId}`, { isChecked: status })
                 .then(() => this.updateAll(status))
                 .catch((error) => this.$log.error(error))
+
+            this.loadings.updateAllWithUserId = false
         },    
         updateAll(status) {
             for (const index in this.tasks) {
@@ -222,12 +265,17 @@ export default {
             }
         },
         async deleteAllWithUserId() {
+            this.loadings.deleteAllWithUserId = true
+
             await this.api.delete(`/tasks/all/${this.userStore.userId}`)
                 .then(() => this.deleteAll())
                 .catch((error) => this.$log.error(error))
+
+            this.loadings.deleteAllWithUserId = false
         },    
         deleteAll() {
             this.tasks = []
+            this.filtering = false
         },
         async filterTasks(e) {
             const filterByStatus = this.isFilterByStatus()
@@ -235,6 +283,7 @@ export default {
 
             this.loadings.filterTasks = filterByStatus && true
             this.loadings.getAndFillTasks = true
+            this.filtering = true
             e.preventDefault()
             
             try {
