@@ -6,7 +6,6 @@ function getApi() {
     const api = axios.create({
         baseURL: process.env.VUE_APP_BACKEND_URL,
         headers: {
-            'X-Api-Key': process.env.VUE_APP_BACKEND_API_KEY,
             'X-Client-Id': userStore.clientId
         }
     })

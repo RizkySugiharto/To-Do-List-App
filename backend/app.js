@@ -51,7 +51,6 @@ fastify.register(require('@fastify/rate-limit'), {
     keyGenerator: (req) => req.headers['x-client-id']
 })
 fastify.register(require('./plugins/clientValidation'))
-fastify.register(require('./plugins/apiKey'))
 fastify.register(require('@fastify/formbody'))
 fastify.register(require('@fastify/compress'))
 
