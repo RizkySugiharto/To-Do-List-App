@@ -26,6 +26,14 @@ h1, h2, h3, h4, h5, h6, p {
     color: rgb(var(--tertiary-rgb))
 }
 
+.text-loading {
+    color: rgb(0, 174, 255) !important;
+}
+
+.text-success {
+    color: limegreen !important;
+}
+
 .text-error {
     color: rgb(var(--bs-danger-rgb));
     text-decoration: underline;

@@ -18,7 +18,10 @@
                     </div>
                     <div class="mt-4">
                         <button type="submit">Login</button>
-                        <div class="text-danger mt-1" v-if="isError">
+                        <div class="text-loading mt-1" v-if="loading">
+                            Please wait....
+                        </div>
+                        <div class="text-danger mt-1" v-else-if="isError">
                             Email or password is invalid.
                         </div>
                     </div>
@@ -44,7 +47,8 @@ export default {
     name: 'LoginView',
     data() {
         return {
-            isError: false
+            isError: false,
+            loading: false
         }
     },
     computed: {
@@ -58,6 +62,7 @@ export default {
             this.$refs.password.type = this.$refs.passwordVisible.checked ? 'text' : 'password'
         },
         async login(e) {
+            this.loading = true
             e.preventDefault()
             
             try {
@@ -77,6 +82,7 @@ export default {
                 this.$log.error(error)
                 this.isError = true
             }
+            this.loading = false
         }
     }
 }

@@ -49,7 +49,8 @@
                 </details>
             </div>
             <div class="mt-2" v-else>
-                <h5>Hmm, you haven't created any tasks yet.</h5>
+                <h5 v-if="loadings.getAndFillTasks">Loading your tasks....</h5>
+                <h5 v-else>Hmm, you haven't created any tasks yet.</h5>
             </div>
         </div>
         <div class="modal fade" id="modalCreate" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
@@ -65,7 +66,10 @@
                                 <label class="form-label text-secondary">Task Name: </label>
                                 <input type="text" class="form-control" ref="taskNameInput">
                             </div>
-                            <div class="text-success" v-for="task, i in lastCreatedTasks" :key="task">
+                            <div v-if="loadings.createTask" class="text-loading">
+                                Creating your task....
+                            </div>
+                            <div v-else class="text-success" v-for="task, i in lastCreatedTasks" :key="task">
                                 ({{ i + 1 }}) Task [ {{ task.name }} ] successfully created.
                             </div>
                         </div>
@@ -96,7 +100,10 @@
                                     <label class="form-check-label text-secondary">Unchecked</label>
                                 </div>
                             </div>
-                            <div class="text-success" v-for="times in filteringTimes" :key="times">
+                            <div class="text-loading mb-1" v-if="loadings.filterTasks">
+                                Trying to filtering....
+                            </div>
+                            <div class="text-success" v-else v-for="times in filteringTimes" :key="times">
                                 ({{ times }}) Successfully filtering tasks by status
                             </div>
                         </div>
@@ -120,6 +127,7 @@ export default {
     name: 'DashboardView',
     data() {
         return {
+            loadings: {},
             tasks: [],
             api: null,
             lastCreatedTasks: [],
@@ -146,24 +154,27 @@ export default {
             return this.$refs.filterByStatusCheckedRadio.checked || this.$refs.filterByStatusUncheckedRadio.checked
         },
         async getAndFillTasks() {
+            this.loadings.getAndFillTasks = true
             try {
                 const response = await this.api.get(`/tasks/all/${this.userStore.userId}`)
                 this.tasks = response.data
             } catch (error) {
                 this.$log.error(error)
             }
+            this.loadings.getAndFillTasks = false
         },
         clearLastCreatedTasks() {
             this.lastCreatedTasks = []
         },
-        async clearFilters() {
+        clearFilters() {
             this.filteringTimes = 0
             this.$refs.filterByStatusCheckedRadio.checked = false
             this.$refs.filterByStatusUncheckedRadio.checked = false
         },
         async createTask(e) {
+            this.loadings.createTask = true
             e.preventDefault()
-
+            
             try {
                 const response = await this.api.post(`/tasks/${this.userStore.userId}`, {
                     name: this.$refs.taskNameInput.value
@@ -175,6 +186,7 @@ export default {
             } catch (error) {
                 this.$log.error(error)
             }
+            this.loadings.createTask = false
         },
         createOne(task) {
             if (!task.name) return
@@ -216,12 +228,13 @@ export default {
             this.tasks = []
         },
         async filterTasks(e) {
+            const filterByStatus = this.isFilterByStatus()
+            const filterValue = filterByStatus && this.$refs.filterByStatusCheckedRadio.checked ? true : false
+
+            this.loadings.filterTasks = filterByStatus && true
             e.preventDefault()
-
+            
             try {
-                const filterByStatus = this.isFilterByStatus()
-                const filterValue = filterByStatus && this.$refs.filterByStatusCheckedRadio.checked ? true : false
-
                 const response = await this.api.get(`/tasks/all/${this.userStore.userId}?filterByStatus=${filterByStatus}&filterValue=${filterValue}`)
                 this.tasks = response.data
 
@@ -230,17 +243,13 @@ export default {
             } catch (error) {
                 this.$log.error(error)
             }
+            this.loadings.filterTasks = false
         }
     }
 }
 </script>
 
 <style scoped>
-
-.text-success {
-    color: limegreen !important;
-}
-
 .btn-account {
     background-color: rgb(58, 91, 255);
     border: 3px solid rgb(var(--text-rgb));

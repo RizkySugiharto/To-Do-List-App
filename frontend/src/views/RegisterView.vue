@@ -22,7 +22,10 @@
                     </div>
                     <div class="mt-4">
                         <button type="submit">Register</button>
-                        <div class="text-danger mt-1" v-if="isError">
+                        <div class="text-loading mt-1" v-if="loading">
+                            Please wait....
+                        </div>
+                        <div class="text-danger mt-1" v-else-if="isError">
                             User's email is already used.
                         </div>
                     </div>
@@ -48,7 +51,8 @@ export default {
     name: 'RegisterView',
     data() {
         return {
-            isError: false
+            isError: false,
+            loading: false
         }
     },
     computed: {
@@ -59,6 +63,7 @@ export default {
             this.$refs.password.type = this.$refs.passwordVisible.checked ? 'text' : 'password'
         },
         async register(e) {
+            this.loading = true
             e.preventDefault()
 
             try {
@@ -76,6 +81,7 @@ export default {
                 this.$log.error(error)
                 this.isError = true
             }
+            this.loading = false
         }
     }
 }
