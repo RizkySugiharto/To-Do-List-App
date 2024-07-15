@@ -31,7 +31,10 @@
             </button>
         </div>
         <div class="d-flex flex-column mb-3">
-            <div v-if="tasks.length > 0">
+            <div v-if="loadings.getAndFillTasks" class="mt-2">
+                <h5>Loading your tasks....</h5>
+            </div>
+            <div v-else-if="tasks.length > 0">
                 <details v-for="task, i in tasks" :key="task">
                     <summary class="text-decoration-line-through" v-if="task.isChecked">{{ task.name }}</summary>
                     <summary v-else>{{ task.name }}</summary>
@@ -49,8 +52,7 @@
                 </details>
             </div>
             <div class="mt-2" v-else>
-                <h5 v-if="loadings.getAndFillTasks">Loading your tasks....</h5>
-                <h5 v-else>Hmm, you haven't created any tasks yet.</h5>
+                <h5>Hmm, you haven't created any tasks yet.</h5>
             </div>
         </div>
         <div class="modal fade" id="modalCreate" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
